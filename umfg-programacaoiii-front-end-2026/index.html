@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Caderno de Lembretes</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&family=Karla:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <div class="app">
+
+        <!-- CABEÇALHO -->
+        <header class="topo">
+            <div class="topo__marca">
+                <span class="topo__selo" aria-hidden="true">✎</span>
+                <div>
+                    <h1>Caderno de Lembretes</h1>
+                    <p>Anote, encontre e organize o que não pode ser esquecido.</p>
+                </div>
+            </div>
+
+            <div class="topo__acoes">
+                <button id="btnTema" class="btn btn--fantasma btn--icone" type="button" title="Alternar tema claro/escuro" aria-label="Alternar tema">◐</button>
+                <button id="btnImprimir" class="btn btn--contorno" type="button">⎙ Imprimir PDF</button>
+                <button id="btnNovo" class="btn btn--principal" type="button">＋ Novo lembrete</button>
+            </div>
+        </header>
+
+        <!-- AVISO DE ERRO DE COMUNICAÇÃO -->
+        <div id="alertaApi" class="alerta hidden" role="alert">
+            <div>
+                <strong>Não foi possível falar com a API.</strong>
+                <span id="alertaApiTexto"></span>
+            </div>
+            <button id="btnTentarNovamente" class="btn btn--contorno btn--pequeno" type="button">Tentar novamente</button>
+        </div>
+
+        <!-- FILTROS -->
+        <section class="painel" aria-labelledby="tituloFiltros">
+            <div class="painel__cabeca">
+                <h2 id="tituloFiltros">Filtros</h2>
+                <button id="btnLimpar" class="link" type="button">Limpar filtros</button>
+            </div>
+
+            <form id="formFiltro" class="filtros" novalidate>
+                <div class="campo campo--larga">
+                    <label for="filtroDescricao">Descrição</label>
+                    <input type="search" id="filtroDescricao" placeholder="Buscar por trecho do texto…" autocomplete="off">
+                </div>
+
+                <fieldset class="grupo">
+                    <legend>Data de cadastro</legend>
+                    <div class="campo">
+                        <label for="cadastroInicial">De</label>
+                        <input type="date" id="cadastroInicial">
+                    </div>
+                    <div class="campo">
+                        <label for="cadastroFinal">Até</label>
+                        <input type="date" id="cadastroFinal">
+                    </div>
+                </fieldset>
+
+                <fieldset class="grupo">
+                    <legend>Data de atualização</legend>
+                    <div class="campo">
+                        <label for="atualizacaoInicial">De</label>
+                        <input type="date" id="atualizacaoInicial">
+                    </div>
+                    <div class="campo">
+                        <label for="atualizacaoFinal">Até</label>
+                        <input type="date" id="atualizacaoFinal">
+                    </div>
+                </fieldset>
+
+                <div class="campo campo--curta">
+                    <label for="tamanhoPagina">Por página</label>
+                    <select id="tamanhoPagina">
+                        <option value="5">5</option>
+                        <option value="10" selected>10</option>
+                        <option value="20">20</option>
+                        <option value="50">50</option>
+                    </select>
+                </div>
+
+                <button id="btnFiltrar" class="btn btn--principal" type="submit">Filtrar</button>
+            </form>
+        </section>
+
+        <!-- LISTAGEM -->
+        <section class="painel" aria-labelledby="tituloLista">
+            <div class="painel__cabeca">
+                <h2 id="tituloLista">Meus lembretes</h2>
+                <span id="totalRegistros" class="contador">0 registros</span>
+            </div>
+
+            <div class="tabela-wrap">
+                <table id="tabela">
+                    <thead>
+                        <tr>
+                            <th data-campo="Descricao" aria-sort="none"><button type="button" class="ordenar">Descrição <span class="seta"></span></button></th>
+                            <th data-campo="DataCadastro" aria-sort="none"><button type="button" class="ordenar">Cadastro <span class="seta"></span></button></th>
+                            <th data-campo="DataAtualizacao" aria-sort="none"><button type="button" class="ordenar">Atualização <span class="seta"></span></button></th>
+                            <th data-campo="IsAtivo" aria-sort="none"><button type="button" class="ordenar">Status <span class="seta"></span></button></th>
+                            <th class="col-acoes">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="listaLembretes"></tbody>
+                </table>
+
+                <div id="carregando" class="vazio hidden">Carregando lembretes…</div>
+                <div id="mensagemVazia" class="vazio hidden">
+                    <span class="vazio__icone" aria-hidden="true">☐</span>
+                    <strong>Nenhum lembrete encontrado.</strong>
+                    <span>Tente mudar os filtros ou crie um novo lembrete.</span>
+                </div>
+            </div>
+
+            <!-- PAGINAÇÃO -->
+            <nav class="paginacao" aria-label="Paginação">
+                <span id="infoPagina" class="paginacao__info"></span>
+                <div id="botoesPagina" class="paginacao__botoes"></div>
+            </nav>
+        </section>
+
+        <footer class="rodape">Programação III · UMFG · 2026</footer>
+    </div>
+
+    <!-- MODAL: CADASTRO / EDIÇÃO -->
+    <dialog id="modalForm" class="modal" aria-labelledby="tituloFormulario">
+        <form id="formLembrete" novalidate>
+            <h2 id="tituloFormulario">Novo lembrete</h2>
+            <input type="hidden" id="lembreteId">
+
+            <div class="campo">
+                <label for="descricao">Descrição <span class="obrigatorio">*</span></label>
+                <textarea id="descricao" rows="4" maxlength="500" placeholder="O que você precisa lembrar?"></textarea>
+                <div class="campo__rodape">
+                    <small id="erroDescricao" class="erro" role="alert"></small>
+                    <small id="contadorDescricao" class="dica">0/500</small>
+                </div>
+            </div>
+
+            <div class="modal__acoes">
+                <button type="button" id="btnCancelar" class="btn btn--contorno">Cancelar</button>
+                <button type="submit" id="btnSalvar" class="btn btn--principal">Salvar</button>
+            </div>
+        </form>
+    </dialog>
+
+    <!-- MODAL: CONFIRMAR EXCLUSÃO -->
+    <dialog id="modalExcluir" class="modal modal--estreito" aria-labelledby="tituloExcluir">
+        <h2 id="tituloExcluir">Excluir lembrete?</h2>
+        <p id="textoExcluir" class="modal__texto"></p>
+        <div class="modal__acoes">
+            <button type="button" id="btnNaoExcluir" class="btn btn--contorno">Manter</button>
+            <button type="button" id="btnSimExcluir" class="btn btn--perigo">Excluir</button>
+        </div>
+    </dialog>
+
+    <!-- TOASTS -->
+    <div id="toasts" class="toasts" aria-live="polite"></div>
+
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>

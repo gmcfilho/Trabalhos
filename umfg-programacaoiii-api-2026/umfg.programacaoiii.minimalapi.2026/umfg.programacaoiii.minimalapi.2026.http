@@ -1,0 +1,28 @@
+@host = https://localhost:7063
+
+### Listar todos os lembretes ativos
+GET {{host}}/lembretes
+
+### Filtrar (paginação, ordenação e filtros opcionais)
+GET {{host}}/lembretes/filtro?NumeroPagina=1&TamanhoPagina=10&Ordem=Descricao&Direcao=ASC&Descricao=
+
+### Buscar por id (troque pelo id de um lembrete)
+GET {{host}}/lembretes/00000000-0000-0000-0000-000000000000
+
+### Criar
+POST {{host}}/lembretes
+Content-Type: application/json
+
+{ "descricao": "Estudar Programação III" }
+
+### Atualizar
+PUT {{host}}/lembretes/00000000-0000-0000-0000-000000000000
+Content-Type: application/json
+
+{ "descricao": "Descrição atualizada" }
+
+### Excluir (exclusão lógica)
+DELETE {{host}}/lembretes/00000000-0000-0000-0000-000000000000
+
+### Relatório em PDF
+GET {{host}}/lembretes/imprimir?NumeroPagina=1&TamanhoPagina=100
